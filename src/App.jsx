@@ -7,8 +7,6 @@ import './styles.css'
 import imgLeonBlum   from '../img/leon_blum.png'
 import imgChirac     from '../img/chiraq.png'
 import imgMitterrand from '../img/miterrand.png'
-
-// ─── Static data ──────────────────────────────────────────────────────────────
 const CANDIDATE_NAMES = ['Léon Blum', 'Jacques Chirac', 'François Mitterrand']
 const CANDIDATE_IMGS  = [imgLeonBlum, imgChirac, imgMitterrand]
 
@@ -26,8 +24,6 @@ const ACCORDION_ITEMS = [
     content: "Une fois signée, la transaction entre dans le mempool — la file d'attente des transactions en attente. Un validateur la sélectionne et l'inclut dans un bloc. Sur Ethereum Sepolia, ça prend ~12 secondes. Après ~12,8 minutes (2 époques), le bloc est finalisé : le vote est irréversible, public, et vérifiable par tous sur Etherscan.",
   },
 ]
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function Spinner() {
   return <span className="spinner" />
@@ -91,7 +87,7 @@ function BlockModal({ data, loading, onClose, onNavigate, voteBlocks }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
 
-        {/* Header */}
+        {}
         <div className="modal-header">
           <div className="modal-title">BLOC #{block?.number ?? '...'} — Vue détaillée</div>
           <div className="modal-header-actions">
@@ -147,7 +143,7 @@ function BlockModal({ data, loading, onClose, onNavigate, voteBlocks }) {
           </div>
         )}
 
-        {/* Navigation */}
+        {}
         <div className="modal-nav">
           <button className="modal-nav-btn" onClick={() => canPrev && handleNavigate(sortedBlocks[currentIdx - 1], 'left')} disabled={!canPrev}>
             ← Bloc précédent
@@ -160,8 +156,6 @@ function BlockModal({ data, loading, onClose, onNavigate, voteBlocks }) {
     </div>
   )
 }
-
-// ─── Main component ───────────────────────────────────────────────────────────
 function App() {
   const [account, setAccount]                 = useState(null)
   const [provider, setProvider]               = useState(null)
@@ -180,8 +174,6 @@ function App() {
   const [modalData, setModalData]             = useState(null)
   const [modalLoading, setModalLoading]       = useState(false)
   const connectRef = useRef(null)
-
-  // ── Chargement initial sans MetaMask ──────────────────────────────────────────
   useEffect(() => {
     const init = async () => {
       if (!window.ethereum) return
@@ -189,12 +181,10 @@ function App() {
         const p = new BrowserProvider(window.ethereum)
         setProvider(p)
         await loadCandidates(p)
-      } catch { /* silent */ }
+      } catch {  }
     }
     init()
   }, [])
-
-  // ── Connexion wallet ──────────────────────────────────────────────────────────
   const connectWallet = async () => {
     try {
       if (!window.ethereum) { setError("MetaMask n'est pas installé."); return }
@@ -213,8 +203,6 @@ function App() {
       await loadCandidates(_provider)
     } catch { setError("Connexion refusée.") }
   }
-
-  // ── Chargement des candidats ──────────────────────────────────────────────────
   const loadCandidates = async (_provider) => {
     const c = new Contract(CONTRACT_ADDRESS, ABI, _provider)
     const count = await c.getCandidatesCount()
@@ -225,8 +213,6 @@ function App() {
     }
     setCandidates(list)
   }
-
-  // ── Chargement des events explorer ───────────────────────────────────────────
   const loadExplorerEvents = async (_provider) => {
     const p = _provider || provider
     if (!p) return
@@ -247,11 +233,11 @@ function App() {
           gasLimit     = block?.gasLimit   != null ? Number(block.gasLimit) : null
           miner        = block?.miner      ?? null
           gasUsedBlock = block?.gasUsed    != null ? Number(block.gasUsed)  : null
-        } catch { /* silent */ }
+        } catch {  }
         try {
           const receipt = await p.getTransactionReceipt(e.transactionHash)
           gasUsed = receipt?.gasUsed != null ? Number(receipt.gasUsed) : null
-        } catch { /* silent */ }
+        } catch {  }
         return {
           hash: e.transactionHash,
           blockNumber: e.blockNumber,
@@ -268,8 +254,6 @@ function App() {
       setExplorerLoading(false)
     }
   }
-
-  // ── Vote ──────────────────────────────────────────────────────────────────────
   const vote = async (candidateId) => {
     try {
       setIsVoting(true)
@@ -301,8 +285,6 @@ function App() {
       setIsVoting(false)
     }
   }
-
-  // ── Écoute des events on-chain ────────────────────────────────────────────────
   useEffect(() => {
     if (!provider) return
     let listenContract
@@ -326,8 +308,6 @@ function App() {
   useEffect(() => {
     if (explorerOpen && provider) loadExplorerEvents()
   }, [explorerOpen])
-
-  // ── Countdown cooldown ────────────────────────────────────────────────────────
   useEffect(() => {
     if (cooldownSeconds <= 0) return
     const timer = setInterval(() => {
@@ -338,8 +318,6 @@ function App() {
     }, 1000)
     return () => clearInterval(timer)
   }, [cooldownSeconds])
-
-  // ── Modal helpers ─────────────────────────────────────────────────────────────
   const openModal = (event) => {
     setModalData({
       event,
@@ -370,27 +348,23 @@ function App() {
           gasUsedBlock: block.gasUsed     != null ? Number(block.gasUsed)   : null,
         },
       })
-    } catch { /* silent */ }
+    } catch {  }
     finally { setModalLoading(false) }
   }
-
-  // ── Derived ───────────────────────────────────────────────────────────────────
   const totalVotes       = candidates.reduce((s, c) => s + c.votes, 0)
   const toggleAccordion  = (i) => setOpenAccordions(prev => ({ ...prev, [i]: !prev[i] }))
   const fmt              = (ts) => ts != null ? new Date(ts * 1000).toLocaleString('fr-FR') : '—'
   const voteBlocks = explorerEvents.map(e => e.blockNumber)
-
-  // ─────────────────────────────────────────────────────────────────────────────
   return (
     <div className="page">
 
-      {/* ── Nav ── */}
+      {}
       <nav className="nav">
         <div className="logo">dApp<span className="logo-dot">.</span>Vote</div>
         <span className="badge">⬡ Sepolia Testnet</span>
       </nav>
 
-      {/* ── Hero ── */}
+      {}
       <div className="hero">
         <div className="tag">⛓ Live on Ethereum</div>
         <h1 className="h1">Vote décentralisé<br />sans intermédiaire</h1>
@@ -400,7 +374,7 @@ function App() {
         </p>
       </div>
 
-      {/* ── Wallet ── */}
+      {}
       <div className="card" ref={connectRef}>
         <div className="card-title"><span className="card-title-accent" />Wallet</div>
         {!account ? (
@@ -417,7 +391,7 @@ function App() {
         {error && <div className="banner-error">⚠ {error}</div>}
       </div>
 
-      {/* ── Smart Contract ── */}
+      {}
       <div className="card">
         <div className="card-title">
           <span className="card-title-accent" />
@@ -448,7 +422,7 @@ function App() {
         </p>
       </div>
 
-      {/* ── Accordéon ── */}
+      {}
       <div className="card">
         <div className="card-title" style={{ marginBottom: '8px' }}>
           <span className="card-title-accent" />
@@ -470,7 +444,7 @@ function App() {
         ))}
       </div>
 
-      {/* ── Candidats ── */}
+      {}
       {candidates.length > 0 && (
         <div className="card">
           <div className="card-title">
@@ -567,7 +541,7 @@ function App() {
         </div>
       )}
 
-      {/* ── Blockchain Explorer ── */}
+      {}
       <div className="card">
         <div className="explorer-header">
           <div className="card-title" style={{ marginBottom: 0 }}>
@@ -623,13 +597,13 @@ function App() {
         </div>
       </div>
 
-      {/* ── Footer ── */}
+      {}
       <footer className="footer">
         Contrat déployé sur Ethereum Sepolia &nbsp;·&nbsp;
         <span className="footer-accent">{CONTRACT_ADDRESS}</span>
       </footer>
 
-      {/* ── Modal bloc ── */}
+      {}
       <BlockModal
         data={modalData}
         loading={modalLoading}
